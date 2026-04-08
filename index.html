@@ -2,47 +2,100 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ZEFRAM Gemini 3 - Latest</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZEFRAM CORE G3</title>
     <style>
-        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 40px; }
-        input, button { padding: 12px; background: #111; color: #0f0; border: 1px solid #0f0; border-radius: 4px; }
-        input { width: 400px; }
-        button { cursor: pointer; font-weight: bold; }
-        button:hover { background: #0f0; color: #000; }
-        #output { margin-top: 20px; white-space: pre-wrap; padding: 20px; border: 1px dotted #0f0; min-height: 100px; }
+        :root { --accent: #00ff41; --bg: #0a0a0a; --panel: #161616; }
+        body { background: var(--bg); color: #eee; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* Header */
+        header { padding: 15px 20px; background: var(--panel); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--accent); }
+        
+        /* Chat Area */
+        #chat-log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .msg { max-width: 85%; padding: 12px 16px; border-radius: 8px; line-height: 1.6; font-size: 0.95rem; }
+        .user { align-self: flex-end; background: #333; color: white; border-bottom-right-radius: 2px; }
+        .ai { align-self: flex-start; background: var(--panel); border-left: 3px solid var(--accent); border-bottom-left-radius: 2px; white-space: pre-wrap; }
+
+        /* Input Area */
+        footer { padding: 20px; background: var(--panel); border-top: 1px solid #333; }
+        .input-group { display: flex; gap: 10px; max-width: 1000px; margin: 0 auto; }
+        input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; outline: none; }
+        input:focus { border-color: var(--accent); }
+        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.8; }
+        button:disabled { background: #555; cursor: not-allowed; }
+
+        .key-mgr { font-size: 10px; color: #666; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
-    <h3>[ SYSTEM EXECUTABLE: GEMINI 3 FLASH ]</h3>
-    <input type="password" id="key" placeholder="PASTE YOUR API KEY HERE">
-    <button id="btn">RUN PROCESS</button>
-    <div id="output">READY...</div>
 
-    <script type="module">
-        // 2026年現在の最新SDKをインポート
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+<header>
+    <h1>ZEFRAM CORE G3</h1>
+    <input type="password" id="api-key" placeholder="API KEY" style="width: 120px; font-size: 10px; padding: 5px;">
+</header>
 
-        document.getElementById('btn').onclick = async () => {
-            const out = document.getElementById('output');
-            const key = document.getElementById('key').value;
-            if(!key) return alert("API KEY REQUIRED");
-            
-            out.innerText = "EXECUTING...";
+<main id="chat-log">
+    <div class="msg ai">SYSTEM READY. Gemini 3 Flash Preview 接続完了。指示を待機中。</div>
+</main>
 
-            try {
-                const genAI = new GoogleGenerativeAI(key);
-                
-                // お客様のコードで使用されていた最新モデル名を指定
-                // プレビュー版のため、404が出る場合は "gemini-1.5-flash" も併記可能
-                const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+<footer>
+    <div class="input-group">
+        <input type="text" id="user-input" placeholder="メッセージを入力...">
+        <button id="send-btn">SEND</button>
+    </div>
+    <div class="key-mgr">※APIキーはセッション中のみ保持されます</div>
+</footer>
 
-                const result = await model.generateContent("「開通成功。Gemini 3 起動しました」と出力せよ。");
-                const response = await result.response;
-                out.innerText = "SUCCESS >> " + response.text();
-            } catch (e) {
-                out.innerText = "FATAL ERROR >> " + e.message;
-            }
-        };
-    </script>
+<script type="module">
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+    const chatLog = document.getElementById('chat-log');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const apiKeyInput = document.getElementById('api-key');
+
+    sendBtn.onclick = async () => {
+        const key = apiKeyInput.value.trim();
+        const text = userInput.value.trim();
+
+        if (!key || !text) return;
+
+        appendMsg(text, 'user');
+        userInput.value = "";
+        sendBtn.disabled = true;
+
+        try {
+            const genAI = new GoogleGenerativeAI(key);
+            // システム指示：嘘をつかない、簡潔に答える、根拠を明確にする
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-3-flash-preview",
+                systemInstruction: "あなたはZEFRAMの専属アシスタントです。回答は常に正確であること。不確かな場合は「不明」と答え、ハルシネーション（嘘）を徹底的に排除してください。"
+            });
+
+            const result = await model.generateContent(text);
+            const response = await result.response;
+            appendMsg(response.text(), 'ai');
+        } catch (e) {
+            appendMsg("ERROR: " + e.message, 'ai');
+        } finally {
+            sendBtn.disabled = false;
+        }
+    };
+
+    function appendMsg(content, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = content;
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    // Enterキー送信対応
+    userInput.onkeypress = (e) => { if (e.key === 'Enter') sendBtn.click(); };
+</script>
+
 </body>
 </html>
