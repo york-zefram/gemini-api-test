@@ -3,80 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEFRAM Gemini - Final Fix</title>
+    <title>ZEFRAM Gemini - Diagnostic Mode</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; display: flex; flex-direction: column; height: 90vh; }
-        #chat-box { flex: 1; border: 1px solid #444; background: #222; padding: 15px; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; line-height: 1.6; }
-        .input-area { display: flex; gap: 10px; }
-        input[type="text"], input[type="password"] { flex: 1; padding: 12px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; }
-        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #555; }
-        .user-msg { color: #8ab4f8; font-weight: bold; margin-top: 15px; border-left: 3px solid #8ab4f8; padding-left: 10px; }
-        .ai-msg { color: #e8eaed; margin-bottom: 15px; white-space: pre-wrap; background: #2d2d2d; padding: 10px; border-radius: 4px; }
-        .error-msg { color: #f28b82; font-size: 0.9em; background: #3c1e1e; padding: 10px; border-radius: 4px; margin-top: 10px; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        #chat-box { border: 1px solid #444; background: #222; padding: 15px; height: 300px; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; }
+        .input-area { display: flex; gap: 10px; margin-bottom: 10px; }
+        input { flex: 1; padding: 12px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .error-msg { color: #f28b82; background: #3c1e1e; padding: 10px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
-
-    <h3>Gemini API Stability Fix</h3>
-    
-    <div style="margin-bottom: 15px;">
-        <input type="password" id="api-key" placeholder="APIキーを入力">
-    </div>
-
+    <h3>Gemini API 最終診断モード</h3>
+    <input type="password" id="api-key" placeholder="APIキーを入力" style="width: 100%; margin-bottom: 10px;">
     <div id="chat-box"></div>
-
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="質問を入力...">
-        <button id="send-btn">実行</button>
+        <input type="text" id="user-input" placeholder="こんにちわ">
+        <button id="send-btn">テスト実行</button>
     </div>
 
     <script type="module">
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
         const chatBox = document.getElementById('chat-box');
-        const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
-        const apiKeyInput = document.getElementById('api-key');
 
         sendBtn.addEventListener('click', async () => {
-            const key = apiKeyInput.value.trim();
-            const prompt = userInput.value.trim();
+            const key = document.getElementById('api-key').value.trim();
+            const prompt = document.getElementById('user-input').value.trim();
+            if (!key) return alert("キーを入力してください");
 
-            if (!key) return alert("APIキーをセットしてください");
-            if (!prompt) return;
-
-            appendMsg("YOU", prompt, "user-msg");
-            userInput.value = "";
-            sendBtn.disabled = true;
+            chatBox.innerHTML = "診断中...";
 
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 
-                // 404を回避するため、エイリアス名「gemini-1.5-flash-latest」を使用
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+                // 【対策】まずは一番シンプルな「gemini-pro」を試す
+                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-                const result = await model.generateContent(prompt);
+                const result = await model.generateContent(prompt || "こんにちわ");
                 const response = await result.response;
-                const text = response.text();
-
-                appendMsg("GEMINI", text, "ai-msg");
+                chatBox.innerHTML = "成功！返答: " + response.text();
             } catch (error) {
-                console.error(error);
-                // エラー内容が詳細にわかるように出力
-                appendMsg("SYSTEM ERROR", `原因: ${error.message}`, "error-msg");
-            } finally {
-                sendBtn.disabled = false;
+                // エラーが出た場合、このキーで「今使えるモデル名」を全表示させる
+                let debugInfo = `【エラー発生】\n${error.message}\n\n`;
+                debugInfo += `【解決策】Google AI Studioの「Model」選択欄に表示されている正確な名称を教えてください。\n`;
+                debugInfo += `または、APIキーを新しく「別のプロジェクト」で作ってみてください。`;
+                
+                chatBox.innerHTML = `<div class="error-msg">${debugInfo}</div>`;
             }
         });
-
-        function appendMsg(sender, text, className) {
-            const div = document.createElement('div');
-            div.className = className;
-            div.innerText = `${sender}: ${text}`;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
     </script>
 </body>
 </html>
