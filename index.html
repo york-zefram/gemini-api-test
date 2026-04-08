@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEFRAM Gemini Lite - Fixed</title>
+    <title>ZEFRAM Gemini Lite - Stability Focus</title>
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; display: flex; flex-direction: column; height: 90vh; }
         #chat-box { flex: 1; border: 1px solid #444; background: #222; padding: 15px; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; line-height: 1.6; }
@@ -13,21 +13,21 @@
         button:disabled { background: #555; }
         .user-msg { color: #8ab4f8; font-weight: bold; margin-top: 15px; border-left: 3px solid #8ab4f8; padding-left: 10px; }
         .ai-msg { color: #e8eaed; margin-bottom: 15px; white-space: pre-wrap; background: #2d2d2d; padding: 10px; border-radius: 4px; }
-        .error-msg { color: #f28b82; font-size: 0.9em; }
+        .error-msg { color: #f28b82; font-size: 0.9em; background: #3c1e1e; padding: 10px; border-radius: 4px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h3>Gemini API Connector</h3>
+    <h3>Gemini API Stability Connector</h3>
     
     <div style="margin-bottom: 15px;">
-        <input type="password" id="api-key" placeholder="Google AI Studioで取得したAPIキーを入力">
+        <input type="password" id="api-key" placeholder="APIキーを入力 (1.5-flashを使用)">
     </div>
 
     <div id="chat-box"></div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="質問を入力してください...">
+        <input type="text" id="user-input" placeholder="質問を入力...">
         <button id="send-btn">実行</button>
     </div>
 
@@ -53,9 +53,8 @@
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 
-                // 【修正ポイント】2026年現在の標準モデル名に変更
-                // もしこれでも404が出る場合は "gemini-pro" もしくは "gemini-2.0-flash" を試してください
-                const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                // クォータ制限を回避するため、最も安定している 1.5-flash を指定
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
@@ -64,7 +63,7 @@
                 appendMsg("GEMINI", text, "ai-msg");
             } catch (error) {
                 console.error(error);
-                appendMsg("SYSTEM ERROR", `原因: ${error.message}\n※モデル名が古いか、APIキーが未反映の可能性があります。`, "error-msg");
+                appendMsg("SYSTEM ERROR", `原因: ${error.message}`, "error-msg");
             } finally {
                 sendBtn.disabled = false;
             }
