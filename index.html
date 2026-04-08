@@ -2,57 +2,47 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEFRAM Gemini - Diagnostic Mode</title>
+    <title>ZEFRAM Gemini 3 - Latest</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        #chat-box { border: 1px solid #444; background: #222; padding: 15px; height: 300px; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; }
-        .input-area { display: flex; gap: 10px; margin-bottom: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 4px; border: 1px solid #444; background: #333; color: white; }
-        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .error-msg { color: #f28b82; background: #3c1e1e; padding: 10px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 40px; }
+        input, button { padding: 12px; background: #111; color: #0f0; border: 1px solid #0f0; border-radius: 4px; }
+        input { width: 400px; }
+        button { cursor: pointer; font-weight: bold; }
+        button:hover { background: #0f0; color: #000; }
+        #output { margin-top: 20px; white-space: pre-wrap; padding: 20px; border: 1px dotted #0f0; min-height: 100px; }
     </style>
 </head>
 <body>
-    <h3>Gemini API 最終診断モード</h3>
-    <input type="password" id="api-key" placeholder="APIキーを入力" style="width: 100%; margin-bottom: 10px;">
-    <div id="chat-box"></div>
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="こんにちわ">
-        <button id="send-btn">テスト実行</button>
-    </div>
+    <h3>[ SYSTEM EXECUTABLE: GEMINI 3 FLASH ]</h3>
+    <input type="password" id="key" placeholder="PASTE YOUR API KEY HERE">
+    <button id="btn">RUN PROCESS</button>
+    <div id="output">READY...</div>
 
     <script type="module">
+        // 2026年現在の最新SDKをインポート
         import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-        const chatBox = document.getElementById('chat-box');
-        const sendBtn = document.getElementById('send-btn');
-
-        sendBtn.addEventListener('click', async () => {
-            const key = document.getElementById('api-key').value.trim();
-            const prompt = document.getElementById('user-input').value.trim();
-            if (!key) return alert("キーを入力してください");
-
-            chatBox.innerHTML = "診断中...";
+        document.getElementById('btn').onclick = async () => {
+            const out = document.getElementById('output');
+            const key = document.getElementById('key').value;
+            if(!key) return alert("API KEY REQUIRED");
+            
+            out.innerText = "EXECUTING...";
 
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 
-                // 【対策】まずは一番シンプルな「gemini-pro」を試す
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                // お客様のコードで使用されていた最新モデル名を指定
+                // プレビュー版のため、404が出る場合は "gemini-1.5-flash" も併記可能
+                const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
-                const result = await model.generateContent(prompt || "こんにちわ");
+                const result = await model.generateContent("「開通成功。Gemini 3 起動しました」と出力せよ。");
                 const response = await result.response;
-                chatBox.innerHTML = "成功！返答: " + response.text();
-            } catch (error) {
-                // エラーが出た場合、このキーで「今使えるモデル名」を全表示させる
-                let debugInfo = `【エラー発生】\n${error.message}\n\n`;
-                debugInfo += `【解決策】Google AI Studioの「Model」選択欄に表示されている正確な名称を教えてください。\n`;
-                debugInfo += `または、APIキーを新しく「別のプロジェクト」で作ってみてください。`;
-                
-                chatBox.innerHTML = `<div class="error-msg">${debugInfo}</div>`;
+                out.innerText = "SUCCESS >> " + response.text();
+            } catch (e) {
+                out.innerText = "FATAL ERROR >> " + e.message;
             }
-        });
+        };
     </script>
 </body>
 </html>
