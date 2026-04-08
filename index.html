@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEFRAM Gemini Lite - Stability Focus</title>
+    <title>ZEFRAM Gemini - Final Fix</title>
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; display: flex; flex-direction: column; height: 90vh; }
         #chat-box { flex: 1; border: 1px solid #444; background: #222; padding: 15px; overflow-y: auto; margin-bottom: 10px; border-radius: 8px; line-height: 1.6; }
@@ -18,10 +18,10 @@
 </head>
 <body>
 
-    <h3>Gemini API Stability Connector</h3>
+    <h3>Gemini API Stability Fix</h3>
     
     <div style="margin-bottom: 15px;">
-        <input type="password" id="api-key" placeholder="APIキーを入力 (1.5-flashを使用)">
+        <input type="password" id="api-key" placeholder="APIキーを入力">
     </div>
 
     <div id="chat-box"></div>
@@ -53,8 +53,8 @@
             try {
                 const genAI = new GoogleGenerativeAI(key);
                 
-                // クォータ制限を回避するため、最も安定している 1.5-flash を指定
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // 404を回避するため、エイリアス名「gemini-1.5-flash-latest」を使用
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
@@ -63,6 +63,7 @@
                 appendMsg("GEMINI", text, "ai-msg");
             } catch (error) {
                 console.error(error);
+                // エラー内容が詳細にわかるように出力
                 appendMsg("SYSTEM ERROR", `原因: ${error.message}`, "error-msg");
             } finally {
                 sendBtn.disabled = false;
