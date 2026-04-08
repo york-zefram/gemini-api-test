@@ -3,50 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEFRAM CORE G3</title>
+    <title>Z-BUDDY Gemini Plus</title>
     <style>
-        :root { --accent: #00ff41; --bg: #0a0a0a; --panel: #161616; }
-        body { background: var(--bg); color: #eee; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        :root { --accent: #00ff41; --bg: #000; --panel: #0a0a0a; }
+        body { background: var(--bg); color: var(--accent); font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Header */
-        header { padding: 15px 20px; background: var(--panel); border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        h1 { margin: 0; font-size: 1.2rem; letter-spacing: 2px; color: var(--accent); }
+        header { padding: 15px 20px; background: var(--panel); border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 1.1rem; letter-spacing: 2px; }
         
-        /* Chat Area */
-        #chat-log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 8px; line-height: 1.6; font-size: 0.95rem; }
-        .user { align-self: flex-end; background: #333; color: white; border-bottom-right-radius: 2px; }
-        .ai { align-self: flex-start; background: var(--panel); border-left: 3px solid var(--accent); border-bottom-left-radius: 2px; white-space: pre-wrap; }
+        #chat-log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .msg { max-width: 90%; line-height: 1.5; font-size: 0.9rem; white-space: pre-wrap; }
+        .ai::before { content: "> SYSTEM: "; font-weight: bold; }
+        .user { color: #fff; }
+        .user::before { content: "> ACCESSOR: "; font-weight: bold; color: var(--accent); }
+        
+        footer { padding: 20px; background: var(--panel); border-top: 1px solid #222; }
+        .input-group { display: flex; gap: 10px; max-width: 1200px; margin: 0 auto; }
+        input[type="text"] { flex: 1; background: #000; border: 1px solid var(--accent); color: var(--accent); padding: 12px; outline: none; }
+        button { background: var(--accent); color: #000; border: none; padding: 0 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #fff; }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
 
-        /* Input Area */
-        footer { padding: 20px; background: var(--panel); border-top: 1px solid #333; }
-        .input-group { display: flex; gap: 10px; max-width: 1000px; margin: 0 auto; }
-        input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; outline: none; }
-        input:focus { border-color: var(--accent); }
-        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
-        button:disabled { background: #555; cursor: not-allowed; }
-
-        .key-mgr { font-size: 10px; color: #666; margin-top: 10px; text-align: center; }
+        .ctrl-panel { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; max-width: 1200px; margin-inline: auto; }
+        #reset-btn { background: #300; color: #f00; border: 1px solid #f00; padding: 4px 10px; font-size: 10px; cursor: pointer; }
+        #api-key { background: #000; border: 1px solid #222; color: #222; font-size: 10px; width: 200px; padding: 5px; }
+        #api-key:focus { color: var(--accent); border-color: var(--accent); }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>ZEFRAM CORE G3</h1>
-    <input type="password" id="api-key" placeholder="API KEY" style="width: 120px; font-size: 10px; padding: 5px;">
+    <h1>Z-BUDDY Gemini Plus [GROUNDING_ENABLED]</h1>
+    <button id="reset-btn">MEMORY PURGE</button>
 </header>
 
-<main id="chat-log">
-    <div class="msg ai">SYSTEM READY. Gemini 3 Flash Preview 接続完了。指示を待機中。</div>
-</main>
+<div id="chat-log">
+    <div class="msg ai">SYSTEM INITIALIZED. 
+> IDENTITY: ZEFRAM 専属アシスタント
+> STATUS: GOOGLE SEARCH GROUNDING ACTIVE
+> POLICY: ANTI-HALLUCINATION / SUBTRACTION LOGIC</div>
+</div>
 
 <footer>
     <div class="input-group">
-        <input type="text" id="user-input" placeholder="メッセージを入力...">
-        <button id="send-btn">SEND</button>
+        <input type="text" id="user-input" placeholder="ACCESSOR NAME OR COMMAND...">
+        <button id="send-btn">EXECUTE</button>
     </div>
-    <div class="key-mgr">※APIキーはセッション中のみ保持されます</div>
+    <div class="ctrl-panel">
+        <input type="password" id="api-key" placeholder="API KEY">
+        <div style="font-size: 9px; color: #444;">&copy; ZEFRAM CORE SYSTEM 2026</div>
+    </div>
 </footer>
 
 <script type="module">
@@ -56,12 +62,20 @@
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const apiKeyInput = document.getElementById('api-key');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // 記憶のリセット処理
+    resetBtn.onclick = () => {
+        chatLog.innerHTML = "<div class='msg ai'>SYSTEM PURGED. 記憶をリセットしました。新たな指示を。</div>";
+        userInput.value = "";
+    };
 
     sendBtn.onclick = async () => {
         const key = apiKeyInput.value.trim();
         const text = userInput.value.trim();
 
-        if (!key || !text) return;
+        if (!key) return alert("API KEY REQUIRED.");
+        if (!text) return;
 
         appendMsg(text, 'user');
         userInput.value = "";
@@ -69,17 +83,25 @@
 
         try {
             const genAI = new GoogleGenerativeAI(key);
-            // システム指示：嘘をつかない、簡潔に答える、根拠を明確にする
+            
+            // モデル設定：検索グラウンディングを有効化
             const model = genAI.getGenerativeModel({ 
                 model: "gemini-3-flash-preview",
-                systemInstruction: "あなたはZEFRAMの専属アシスタントです。回答は常に正確であること。不確かな場合は「不明」と答え、ハルシネーション（嘘）を徹底的に排除してください。"
+                tools: [{ googleSearch: {} }],
+                systemInstruction: `あなたはZEFRAMの専属アシスタントです。
+                1. ユーザーが「ZEFRAM」または「YORK」と名乗った場合、必ず「私はZEFRAMの専属アシスタントとして、ハルシネーション（嘘）を排除し、正確な情報を提供することを最優先事項としております」と宣言してください。
+                2. 回答は必ずGoogle検索の結果に基づき、実在するデータのみを扱ってください。
+                3. 不確かな情報は「不明」と断定し、憶測での回答を固く禁じます。`
             });
 
+            // グラウンディングを含むリクエスト
             const result = await model.generateContent(text);
             const response = await result.response;
-            appendMsg(response.text(), 'ai');
+            const outputText = response.text();
+
+            appendMsg(outputText, 'ai');
         } catch (e) {
-            appendMsg("ERROR: " + e.message, 'ai');
+            appendMsg("FATAL ERROR: " + e.message, 'ai');
         } finally {
             sendBtn.disabled = false;
         }
@@ -93,8 +115,7 @@
         chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    // Enterキー送信対応
-    userInput.onkeypress = (e) => { if (e.key === 'Enter') sendBtn.click(); };
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBtn.click(); });
 </script>
 
 </body>
